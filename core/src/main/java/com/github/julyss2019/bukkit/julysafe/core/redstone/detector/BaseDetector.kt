@@ -42,6 +42,7 @@ abstract class BaseDetector : Detector {
 
     protected fun playerDebug(nearbyPlayers: List<Player>, message: String) {
         nearbyPlayers
+            .filter { it.isOnline }
             .map { module.context.plugin.julySafePlayerManager.getJulySafePlayer(it) }
             .filter { it.debugEnabled }
             .forEach {
@@ -64,18 +65,24 @@ abstract class BaseDetector : Detector {
     }
 
     protected fun notifyPlayers(record: Record, location: Location, nearbyPlayers: List<Player>) {
-        nearbyPlayers.forEach {
-            val julySafePlayer = module.context.plugin.julySafePlayerManager.getJulySafePlayer(it)
-            val now = System.currentTimeMillis()
+        nearbyPlayers
+            .filter { it.isOnline }
+            .forEach {
+                val julySafePlayer = module.context.plugin.julySafePlayerManager.getJulySafePlayer(it)
+                val now = System.currentTimeMillis()
 
-            if (now - julySafePlayer.lastRedstoneLimitNotify > notifyPlayerInterval * 1000L) {
-                Messages.sendColoredMessage(it, Texts.setPlaceholders(locale.getString("banned"), PlaceholderContainer()
-                    .put("x", location.blockX)
-                    .put("y", location.blockY)
-                    .put("z", location.blockZ)
-                    .put("expired", simpleDateFormat.format(record.getBanExpired()))))
-                julySafePlayer.lastRedstoneLimitNotify = now
+                if (now - julySafePlayer.lastRedstoneLimitNotify > notifyPlayerInterval * 1000L) {
+                    Messages.sendColoredMessage(
+                        it, Texts.setPlaceholders(
+                            locale.getString("banned"), PlaceholderContainer()
+                                .put("x", location.blockX)
+                                .put("y", location.blockY)
+                                .put("z", location.blockZ)
+                                .put("expired", simpleDateFormat.format(record.getBanExpired()))
+                        )
+                    )
+                    julySafePlayer.lastRedstoneLimitNotify = now
+                }
             }
-        }
     }
 }
